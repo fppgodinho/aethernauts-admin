@@ -1,0 +1,13 @@
+$width: 120px;
+.world                                                                          {
+  box-sizing:         content-box;
+  display:            flex;
+  flex-direction:     column;
+  align-items:        stretch;
+  
+  .title                                                                        {
+  }
+  .container                                                                    {
+    margin-left: 5px;
+  }
+}

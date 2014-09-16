@@ -1,0 +1,12 @@
+<div class="world">
+    <div class="title" >{{world.name}}</div>
+    <div class="container" data-ng-repeat="continent in world.continents">
+        <div class="title">{{continent.name}}</div>
+        <div class="container" data-ng-repeat="region in continent.regions">
+            <div class="title">{{region.name}}</div>
+            <div class="container" data-ng-repeat="area in region.areas">
+                <div class="title">{{area.name}}</div>
+            </div>
+        </div>
+    </div>
+</div>

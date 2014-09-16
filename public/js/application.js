@@ -66,7 +66,6 @@ aethernauts.directive('uiAuth', [function()                                     
                 $scope.login            = function ()                           {
                     if ($scope.profile) return;
                     server.login($scope.username, $scope.password, function(message){
-                        console.log(message);
                         if (!message.error && message.result)                   {
                             var profile             = message.result;
                             // var defaultEmail        = getDefault(profile.identity.emails);
@@ -94,7 +93,6 @@ aethernauts.directive('uiAuth', [function()                                     
                     if (nv === ov) return;
                     if (!nv) reset();
                     $scope.profile          = nv;
-                    console.log('Profile:', $scope.profile);
                 });
 
                 function getDefault(list)                                       {
@@ -118,22 +116,21 @@ aethernauts.directive('uiMenu', [function()                                     
         transcode:      true,
         replace:        true,
         templateUrl:    'html/templates/ui-menu.html',
-        controller:     ['$scope', 'server', 'session', 'world', 'alerts', 'errors',
-            function($scope, server, session, world, alerts, errors)            {
+        controller:     ['$scope', 'server', 'context', 'world', 'alerts', 'errors',
+            function($scope, server, context, world, alerts, errors)            {
                 
                 $scope.getWorld             = function ()                       {
+                    context.area    = "world";
                     server.getWorld('Nod', function(message)                    {
-                        console.log('Humm: ', message.result);
                         if (message.error) alerts.add('simple', message.error.code, errors.getServerError(message.error.code, message.error.message));
-                        else session.data = message.result;
+                        else world.data = message.result;
                     });
                 };
                 
                 $scope.$watch(function(){ return world.data; }, function(nv, ov){
                     if (nv === ov) return;
-                    console.log('Doooiss', world.data);
+                    console.log('World:', world.data);
                 });
-                
             }
         ]
     };
@@ -182,6 +179,28 @@ aethernauts.directive('uiServer', [function()                                   
     };
 }]);
 
+aethernauts.directive('uiWorld', [function()                                    {
+    return {
+        scope:      {
+            
+        },
+        transcode:      true,
+        replace:        true,
+        templateUrl:    'html/templates/ui-world.html',
+        controller:     ['$scope', 'world',
+            function($scope, world)                                             {
+                $scope.world    = null;
+                
+                $scope.$watch(function(){ return world.data; }, function(nv, ov){
+                    if (nv === ov) return;
+                    //
+                    $scope.world = world.data;
+                });
+            }
+        ]
+    };
+}]);
+
 aethernauts.directive('ui', [function()                                          {
     return {
         scope:      {
@@ -190,25 +209,32 @@ aethernauts.directive('ui', [function()                                         
         transcode:      true,
         replace:        true,
         templateUrl:    'html/templates/ui.html',
-        controller:     ['$scope', 'server', 'session', function($scope, server, session) {
-            $scope.connected        = false;
-            $scope.logedin          = false;
-            
-            $scope.$watch(function(){ return server.isConnected(); }, function(nv, ov){
-                if (nv === ov) return;
-                $scope.connected    = nv;
-            });
-            
-            $scope.$watch(function(){ return server.isConnected(); }, function(nv, ov){
-                if (nv === ov) return;
-                $scope.connected    = nv;
-            });
-            
-            $scope.$watch(function(){ return session.getProfile(); }, function(nv, ov){
-                if (nv === ov) return;
-                $scope.logedin      = nv?true:false;
-            });
-        }]
+        controller:     ['$scope', 'server', 'session', 'context',
+            function($scope, server, session, context)                          {
+                $scope.connected        = false;
+                $scope.logedin          = false;
+                
+                $scope.$watch(function(){ return server.isConnected(); }, function(nv, ov) {
+                    if (nv === ov) return;
+                    $scope.connected    = nv;
+                });
+                
+                $scope.$watch(function(){ return server.isConnected(); }, function(nv, ov) {
+                    if (nv === ov) return;
+                    $scope.connected    = nv;
+                });
+                
+                $scope.$watch(function(){ return session.getProfile(); }, function(nv, ov) {
+                    if (nv === ov) return;
+                    $scope.logedin      = nv?true:false;
+                });
+    
+                $scope.$watch(function(){ return context.area; }, function(nv, ov) {
+                    if (nv === ov) return;
+                    $scope.area         = context.area;
+                });
+            }
+        ]
     };
 }]);
 
@@ -249,6 +275,14 @@ aethernauts.service('alerts', ['renderer', function(renderer)                   
     alerts.getCount     = function() { return messages.length;                  };
     
     return alerts;
+}]);
+
+aethernauts.service('context', ['renderer', function(renderer)                  {
+    var service             = {};
+    
+    service.area = "";
+    
+    return service;
 }]);
 
 aethernauts.service('errors', [function()                                       {

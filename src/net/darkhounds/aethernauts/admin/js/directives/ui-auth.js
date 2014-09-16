@@ -16,7 +16,6 @@ aethernauts.directive('uiAuth', [function()                                     
                 $scope.login            = function ()                           {
                     if ($scope.profile) return;
                     server.login($scope.username, $scope.password, function(message){
-                        console.log(message);
                         if (!message.error && message.result)                   {
                             var profile             = message.result;
                             // var defaultEmail        = getDefault(profile.identity.emails);
@@ -44,7 +43,6 @@ aethernauts.directive('uiAuth', [function()                                     
                     if (nv === ov) return;
                     if (!nv) reset();
                     $scope.profile          = nv;
-                    console.log('Profile:', $scope.profile);
                 });
 
                 function getDefault(list)                                       {
