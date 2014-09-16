@@ -87,30 +87,11 @@ html, body {
         margin: 2px;
         box-sizing: content-box;
         border: #000 solid 1px; }
-  .ui .characters {
+  .ui .menu {
     box-sizing: content-box;
     display: flex;
     flex-direction: column;
-    align-items: center; }
-    .ui .characters > * {
-      flex: 1; }
-    .ui .characters #LIST {
-      width: 120px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch; }
-      .ui .characters #LIST #AVAILABLE {
-        display: block; }
-    .ui .characters #ADD {
-      width: 120px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch; }
-    .ui .characters #CHARACTER {
-      box-sizing: content-box;
-      display: flex;
-      flex-direction: column;
-      align-items: center; }
+    align-items: stretch; }
 
 .popup-alerts {
   position: fixed;

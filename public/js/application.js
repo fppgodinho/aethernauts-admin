@@ -60,35 +60,8 @@ aethernauts.directive('uiAuth', [function()                                     
             function($scope, server, session, alerts, errors)                   {
                 $scope.profile          = null;
                 
-                $scope.showRegister     = false;
-                
                 $scope.username         = 'admin';
                 $scope.password         = 'test';
-                $scope.password2        = '';
-                $scope.nameFirst        = '';
-                $scope.nameLast         = '';
-                $scope.email            = '';
-                $scope.email2           = '';
-                
-                $scope.register         = function ()                           {
-                    if ($scope.profile) return;
-                    // TODO: validate fields!
-                    server.register($scope.username, $scope.password, $scope.nameFirst, $scope.nameLast, $scope.email, function(message){
-                        if (!message.error && message.result)                   {
-                            var profile             = message.result;
-                            var defaultEmail        = getDefault(profile.identity.emails);
-                            $scope.password         = '';
-                            $scope.username         = profile.credentials.username;
-                            $scope.nameFirst        = profile.identity.name.first;
-                            $scope.nameLast         = profile.identity.name.last;
-                            $scope.email            = defaultEmail?defaultEmail.address:'';
-                            $scope.showRegister     = false;
-                            session.setProfile(profile);
-                        } else if (message.error) alerts.add('simple', message.error.code, errors.getServerError(message.error.code, message.error.message), function(choice) {
-                            $scope.password         = '';
-                        });
-                    });
-                };
                 
                 $scope.login            = function ()                           {
                     if ($scope.profile) return;
@@ -121,87 +94,46 @@ aethernauts.directive('uiAuth', [function()                                     
                     if (nv === ov) return;
                     if (!nv) reset();
                     $scope.profile          = nv;
-                    $scope.showRegister     = false;
                     console.log('Profile:', $scope.profile);
                 });
 
-                $scope.$watch('showRegister', function(nv, ov)                  {
-                    if (nv === ov) return;
-                    if (nv) reset();
-                });
-                
                 function getDefault(list)                                       {
                     if (list && list.length) for (var i in list) if (list[i].default) return list[i];
                     return null;
                 }
                 
                 function reset()                                                {
-                    $scope.password         = '';
-                    $scope.password2        = '';
-                    $scope.nameFirst        = '';
-                    $scope.nameLast         = '';
-                    $scope.email            = '';
-                    $scope.email2           = '';
+                    $scope.password         = 'test';
                 }
             }
         ]
     };
 }]);
 
-aethernauts.directive('uiCharacters', [function()                               {
+aethernauts.directive('uiMenu', [function()                                     {
     return {
         scope:      {
             
         },
         transcode:      true,
         replace:        true,
-        templateUrl:    'html/templates/ui-characters.html',
-        controller:     ['$scope', 'server', 'session', 'alerts', 'errors',
-            function($scope, server, session, alerts, errors)                   {
-                $scope.characters       = null;
-                $scope.character        = null;
+        templateUrl:    'html/templates/ui-menu.html',
+        controller:     ['$scope', 'server', 'session', 'world', 'alerts', 'errors',
+            function($scope, server, session, world, alerts, errors)            {
                 
-                $scope.list             = function ()                           {
-                    server.getCharacters(function(message)                      {
-                        if (!message.error)                                     {
-                            $scope.characters = message.result || [];
-                        } else console.log('Characters error', message.error);
+                $scope.getWorld             = function ()                       {
+                    server.getWorld('Nod', function(message)                    {
+                        console.log('Humm: ', message.result);
+                        if (message.error) alerts.add('simple', message.error.code, errors.getServerError(message.error.code, message.error.message));
+                        else session.data = message.result;
                     });
                 };
                 
-                $scope.add             = function ()                            {
-                    server.createCharacter($scope.nameFirst, $scope.nameLast, function(message) {
-                        if (!message.error)                                     {
-                            $scope.character = message.result || [];
-                        } else console.log('Characters error', message.error);
-                    });
-                };
-                
-                $scope.kill             = function ()                           {
-                    server.deleteCharacter($scope.character, function(message)  {
-                        if (!message.error)                                     {
-                            $scope.character    = null;
-                        } else console.log('Characters error', message.error);
-                    });
-                };
-                
-                $scope.$watch('character', function(nv, ov)                     {
+                $scope.$watch(function(){ return world.data; }, function(nv, ov){
                     if (nv === ov) return;
-                    session.setCharacter(nv);
+                    console.log('Doooiss', world.data);
                 });
                 
-                $scope.$watch(function(){ return session.getProfile(); }, function(nv, ov){
-                    if (nv === ov) return;
-                    $scope.character    = null;
-                    if (nv) $scope.list();
-                });
-                
-                $scope.$watch(function(){ return session.getCharacter(); }, function(nv, ov){
-                    if (nv === ov) return;
-                    $scope.character    = nv;
-                    console.log('Character:', $scope.profile);
-                });
-
             }
         ]
     };
@@ -348,106 +280,125 @@ aethernauts.service('renderer', ['$rootScope', function($rootScope)             
     return renderer;
 }]);
 
-aethernauts.service('server', ['renderer', 'session', function(renderer, session) {
-    var ws              = null;
-    var server          = {};
-    
-    var name            = '';
-    var connected       = false;
-    
-    server.isConnected  = function() { return connected;                        }
-    server.getName      = function() { return name;                             }
-    server.connect      = function (address, port, onConnect, onDisconnect)     {
-        address         = address || 'localhost';
-        port            = port || 80;
+aethernauts.service('server', ['renderer', 'session', 'auth', 'admin',
+    function(renderer, session, auth, admin)                                    {
+        var server          = {};
+        var ws              = null;
         
-        if (connected) server.disconnect();
-        ws              = new WebSocket("ws://" + address + ':' + port);
-        ws.onopen       = function()                                            {
-            connected   = true;
-            if (onConnect) onConnect();
-            renderer.render();
+        var name            = '';
+        var connected       = false;
+    
+        server.isConnected  = function() { return connected;                    };
+        server.getName      = function() { return name;                         };
+    
+        server.connect      = function (address, port, onConnect, onDisconnect) {
+            address         = address || 'localhost';
+            port            = port || 80;
+            
+            if (connected) server.disconnect();
+            ws              = new WebSocket("ws://" + address + ':' + port);
+            ws.onopen       = function()                                        {
+                connected   = true;
+                if (onConnect) onConnect();
+                renderer.render();
+            };
+            ws.onclose      = function()                                        {
+                connected   = false;
+                session.reset();
+                if (onDisconnect) onDisconnect();
+                renderer.render();
+            };
+    
+            ws.onmessage    = function(message)                                 {
+                handleMessage(message.data);
+                renderer.render();
+            };
         };
-        ws.onclose      = function()                                            {
-            connected   = false;
-            session.reset();
-            if (onDisconnect) onDisconnect();
-            renderer.render();
+        
+        server.disconnect   = function ()                                       {
+            if (!connected) return;
+            ws.close();
+        };
+        
+        server.login        = function (username, password, callback)           {
+            if (!connected) return;
+            auth.login(ws, username, password, addCallback(callback));
+        };
+        
+        server.logout       = function (callback)                               {
+            if (!connected) return;
+            auth.logout(ws, addCallback(callback));
+        };
+        
+        server.register     = function (username, password, firstname, lastname, email, callback) {
+            if (!connected) return;
+            auth.register(ws, username, password, firstname, lastname, email, addCallback(callback));
         };
 
-        ws.onmessage    = function(message)                                     {
-            handleMessage(message.data);
-            renderer.render();
+        server.getWorld     = function (name, callback)                         {
+            if (!connected) return;
+            admin.getWorld(ws, name, addCallback(callback));
         };
-    };
-    
-    server.disconnect   = function ()                                           {
-        if (!connected) return;
-        ws.close();
-    };
-    
-    server.register     = function (username, password, firstname, lastname, email, callback) {
-        if (!connected) return;
-        password        = CryptoJS.MD5(password + '_' + session.getSalt()).toString();
-        ws.send(JSON.stringify({type: 'auth', action:'register', username:username, password:password, firstname:firstname, lastname: lastname, email: email, callbackID:addCallback(callback)}));
-    };
-    
-    server.login    = function (username, password, callback)                   {
-        if (!connected) return;
-        password    = CryptoJS.MD5(CryptoJS.MD5(password + '_' + session.getSalt()).toString() + session.getToken()).toString();
-        ws.send(JSON.stringify({type: 'auth', action:'login', username:username, password:password, callbackID:addCallback(callback)}));
-    };
-    
-    server.logout    = function (callback)                                      {
-        if (!connected) return;
-        ws.send(JSON.stringify({type: 'auth', action:'logout', callbackID:addCallback(callback)}));
-    };
-    
-    
-    server.getCharacters    = function (callback)                               {
-        if (!connected) return;
-        ws.send(JSON.stringify({type: 'characters', action:'list', callbackID:addCallback(callback)}));
-    };
-    
-    server.createCharacter  = function (firstname, lastname, callback)          {
-        if (!connected) return;
-        ws.send(JSON.stringify({type: 'characters', action:'create', firstname: firstname, lastname:lastname, callbackID:addCallback(callback)}));
-    };
-    
-    server.deleteCharacter  = function (character, callback)                    {
-        if (!connected) return;
-        ws.send(JSON.stringify({type: 'characters', action:'delete', character: character, callbackID:addCallback(callback)}));
-    };
-    
-    
-    function handleMessage(message)                                             {
-        message     = JSON.parse(message);
-        switch(message.type)                                                    {
-            case 'session':
-                if (message.state == 'start')                                   {
-                    name        = message.name;
-                    session.set(message.salt, message.token);
-                }
-                break;
-            case 'response':
-                message.callbackID = +message.callbackID;
-                if (message.callbackID < callbacks.length && callbacks[message.callbackID]){
-                    var callback    = callbacks[message.callbackID];
-                    callbacks[message.callbackID]   = null;
-                    callback(message);
-                }
-                break;
-            default: break;
+        
+        function handleMessage(message)                                         {
+            message     = JSON.parse(message);
+            switch(message.type)                                                {
+                case 'session':
+                    if (message.state == 'start')                               {
+                        name        = message.name;
+                        session.set(message.salt, message.token);
+                    }
+                    break;
+                case 'response':
+                    message.callbackID = +message.callbackID;
+                    if (message.callbackID < callbacks.length && callbacks[message.callbackID]){
+                        var callback    = callbacks[message.callbackID];
+                        callbacks[message.callbackID]   = null;
+                        callback(message);
+                    }
+                    break;
+                default: break;
+            }
         }
+        
+        var callbacks = [];
+        function addCallback(callback)                                          {
+            callbacks.push(callback);
+            return callbacks.length - 1;
+        }
+        
+        return server;
     }
+]);
+
+aethernauts.service('admin', ['session', function(session)                      {
+    var auth        = {};
     
-    var callbacks = [];
-    function addCallback(callback)                                              {
-        callbacks.push(callback);
-        return callbacks.length - 1;
-    }
+    auth.getWorld    = function (ws, name, callbackID)               {
+        ws.send(JSON.stringify({type: 'admin', action:'getWorld', name:name, callbackID:callbackID}));
+    };
     
-    return server;
+    return auth;
+}]);
+
+aethernauts.service('auth', ['session', function(session)                       {
+    var auth        = {};
+    
+    auth.login    = function (ws, username, password, callbackID)               {
+        password    = CryptoJS.MD5(CryptoJS.MD5(password + '_' + session.getSalt()).toString() + session.getToken()).toString();
+        ws.send(JSON.stringify({type: 'auth', action:'login', username:username, password:password, callbackID:callbackID}));
+    };
+    
+    auth.logout    = function (ws, callbackID)                                  {
+        ws.send(JSON.stringify({type: 'auth', action:'logout', callbackID:callbackID}));
+    };
+    
+    auth.register     = function (ws, username, password, firstname, lastname, email, callbackID) {
+        password        = CryptoJS.MD5(password + '_' + session.getSalt()).toString();
+        ws.send(JSON.stringify({type: 'auth', action:'register', username:username, password:password, firstname:firstname, lastname: lastname, email: email, callbackID:callbackID}));
+    };
+    
+    return auth;
 }]);
 
 aethernauts.service('session', ['renderer', function(renderer)                  {
@@ -489,4 +440,12 @@ aethernauts.service('session', ['renderer', function(renderer)                  
     };
     
     return session;
+}]);
+
+aethernauts.service('world', ['renderer', function(renderer)                  {
+    var service             = {};
+    
+    service.data = null;
+    
+    return service;
 }]);
