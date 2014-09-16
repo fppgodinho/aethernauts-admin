@@ -1,0 +1,145 @@
+/* 
+    Created on : 28-Apr-2014, 19:14:16
+    Author     : Cain
+*/
+html, body {
+  display: block;
+  padding: 0px;
+  margin: 0px;
+  width: 100%;
+  height: 100%; }
+
+.ui {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  width: 100%;
+  height: 100%; }
+  .ui #TOP {
+    display: block;
+    width: 100%;
+    height: 100px;
+    background-color: rgba(255, 0, 0, 0.5); }
+  .ui #MIDDLE {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    background-color: rgba(0, 0, 255, 0.5);
+    flex: 1; }
+    .ui #MIDDLE #LEFT {
+      display: inline-block;
+      width: 250px;
+      background-color: rgba(255, 0, 255, 0.5); }
+    .ui #MIDDLE #CENTER {
+      display: inline-block;
+      flex: 1;
+      background-color: rgba(255, 255, 255, 0.5); }
+    .ui #MIDDLE #RIGHT {
+      display: inline-block;
+      width: 250px;
+      background-color: rgba(255, 0, 255, 0.5); }
+  .ui #BOTTOM {
+    display: block;
+    width: 100%;
+    height: 100px;
+    background-color: rgba(255, 0, 0, 0.5); }
+  .ui .server {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: 2px; }
+    .ui .server #CONNECT {
+      display: inline-flex;
+      flex-direction: row; }
+      .ui .server #CONNECT * {
+        margin: 2px;
+        box-sizing: content-box;
+        border: #000 solid 1px; }
+      .ui .server #CONNECT #ADDRESS {
+        width: 64ch; }
+      .ui .server #CONNECT #PORT {
+        width: 6ch; }
+      .ui .server #CONNECT #SUBMIT {
+        width: 12ch; }
+    .ui .server #DISCONNECT {
+      display: inline-flex;
+      flex-direction: row; }
+      .ui .server #DISCONNECT * {
+        margin: 2px;
+        box-sizing: content-box;
+        border: #000 solid 1px; }
+      .ui .server #DISCONNECT #NAME {
+        display: inline-block;
+        border: none; }
+      .ui .server #DISCONNECT #SUBMIT {
+        width: 12ch; }
+  .ui .auth {
+    box-sizing: content-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center; }
+    .ui .auth #LOGOUT, .ui .auth #LOGIN, .ui .auth #REGISTER {
+      box-sizing: content-box;
+      display: flex;
+      flex-direction: column;
+      width: 120px; }
+      .ui .auth #LOGOUT *, .ui .auth #LOGIN *, .ui .auth #REGISTER * {
+        margin: 2px;
+        box-sizing: content-box;
+        border: #000 solid 1px; }
+  .ui .characters {
+    box-sizing: content-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center; }
+    .ui .characters > * {
+      flex: 1; }
+    .ui .characters #LIST {
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch; }
+      .ui .characters #LIST #AVAILABLE {
+        display: block; }
+    .ui .characters #ADD {
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch; }
+    .ui .characters #CHARACTER {
+      box-sizing: content-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center; }
+
+.popup-alerts {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  z-index: 999999;
+  background-color: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; }
+  .popup-alerts #SIMPLE {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    height: 150px;
+    background-color: #FFF;
+    border: #000 solid 1px;
+    padding: 5px; }
+    .popup-alerts #SIMPLE #TITLE {
+      display: block;
+      width: 100%;
+      height: 1em;
+      text-align: center; }
+    .popup-alerts #SIMPLE #MESSAGE {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      justify-content: center;
+      align-items: center; }
