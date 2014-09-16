@@ -126,11 +126,6 @@ aethernauts.directive('uiMenu', [function()                                     
                         else world.data = message.result;
                     });
                 };
-                
-                $scope.$watch(function(){ return world.data; }, function(nv, ov){
-                    if (nv === ov) return;
-                    console.log('World:', world.data);
-                });
             }
         ]
     };
